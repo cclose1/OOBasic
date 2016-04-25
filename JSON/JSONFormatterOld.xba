@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE script:module PUBLIC "-//OpenOffice.org//DTD OfficeDocument 1.0//EN" "module.dtd">
+<script:module xmlns:script="http://openoffice.org/2000/script" script:name="JSONFormatterOld" script:language="StarBasic">Option Compatible
+Option ClassModule
+Option Explicit
+
+Private mText   AS String
+Private mFileNo AS Integer
+Private mFileIO AS Boolean
+Private mFile   AS String
+Private mLine   AS String
+
+Private Sub Class_Initialize()
+	mFileIO = false
+	mText   = &quot;&quot;
+	mLine   = &quot;&quot;
+End Sub
+
+Public Property Get JSONType AS String 
+	JSONType = &quot;Formatter&quot;
+End Property
+
+Private Property Get CurrentPrefix AS String
+	Dim i AS Integer
+	
+	CurrentPrefix = &quot;&quot;
+	
+	For i = 1 To Len(mLine)
+		CurrentPrefix = CurrentPrefix &amp; &quot; &quot;
+	Next
+End Property
+
+Private Function EscapeString(text AS String, quote AS Boolean)
+	Dim i AS Integer
+	
+	If quote Then 
+		EscapeString = &quot;&quot;&quot;&quot;
+	Else 
+		EscapeString = &quot;&quot;
+	End if
+	
+	For i = 1 To Len(text)
+		Dim ch AS String
+		
+		ch = Mid(text, i, 1)
+		
+		Select Case ch
+			Case vbTab
+				ch = &quot;\t&quot;
+			Case vbCR
+				ch = &quot;\r&quot;
+			Case vbLF
+				ch = &quot;\n&quot;
+			Case &quot;\&quot;
+				ch = &quot;\\&quot;
+			Case &quot;&quot;&quot;&quot;
+				ch = &quot;\&quot;&quot;&quot;
+		End Select
+	
+		EscapeString = EscapeString &amp; ch
+	Next
+	
+	If quote Then EscapeString = EscapeString &amp; &quot;&quot;&quot;&quot;
+End Function
+
+Private Sub Add(leftPad AS String, field AS String)
+	If mLine = &quot;&quot; Then mLine = leftPad
+	
+	mLine = mLine &amp; field
+End Sub
+
+Private Sub NewLine
+	If mFileIO Then
+		Print #mFileNo, mLine
+	Else
+		mText = mText &amp; mLine &amp; Chr(13)
+	End If
+	
+	mLine = &quot;&quot;
+End Sub
+
+Private Sub OutPutList(ByVal leftPad AS String, list AS Object)
+	Dim left  AS String
+	Dim right AS String
+	
+	If list.JSONType = &quot;Object&quot; Then
+		left  = &quot;{&quot;
+		right = &quot;}&quot;
+	Else
+		left  = &quot;[&quot;
+		right = &quot;]&quot;
+	End If
+	
+	list.ReIterate
+	Self.Add(leftPad, left)
+	leftPad = CurrentPrefix
+	
+	Do While List.HasNext
+		Self.Build(leftPad, list.GetNext)
+		
+		If List.HasNext Then
+			Self.Add(leftPad, &quot;,&quot;)
+			Self.NewLine
+		Else
+			Self.Add(leftPad, right)	
+		End If
+	Loop
+End Sub
+
+Public Property Let Self(me AS JSONFormatter)
+	Self = me
+End Property
+
+Public Property Let File(name AS String)
+	mFileIO = true
+	mFileNo = Freefile
+	mFile   = name
+	
+	Open mFile For Output As #mFileNo
+End Property
+
+Private Sub Build(ByVal leftPad AS String, typeTest AS Variant)
+	Dim JSON AS Variant
+	
+	JSON = typeTest
+	
+	Select Case TypeName(typeTest)
+		Case &quot;Object&quot;
+			Select Case JSON.JSONType
+				Case &quot;Object&quot;
+					Self.OutputList(leftPad, JSON)
+				Case &quot;Array&quot;
+					Self.OutputList(leftPad, JSON)
+				Case &quot;NameValue&quot;
+					Self.Add(leftPad, EscapeString(JSON.Name, false))
+					Self.Add(leftPad, &quot;:&quot;)
+					Self.Build(leftPad, JSON.Value)
+				Case Else
+			End Select
+		Case &quot;Boolean&quot;
+			If JSON then
+				Self.Add(leftPad, &quot;true&quot;)
+			Else
+				Self.Add(leftPad, &quot;false&quot;)
+			End If
+		Case &quot;Date&quot;
+			Self.Add(leftPad, EscapeString(JSON, true))
+		Case &quot;String&quot;
+			Self.Add(leftPad, EscapeString(JSON, true))
+		Case &quot;Empty&quot;, &quot;Null&quot;
+			Self.Add(leftPad, &quot;null&quot;)
+		Case Else
+			Self.Add(leftPad, JSON)
+	End Select
+End Sub
+
+Public Sub Complete
+	If mLine &lt;&gt; &quot;&quot; Then NewLine
+	
+	If mFileIO Then Close #mFileNo
+End Sub
+
+Public Property Get Text AS String
+	Text = mText
+End Property
+
+</script:module>

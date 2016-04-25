@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE script:module PUBLIC "-//OpenOffice.org//DTD OfficeDocument 1.0//EN" "module.dtd">
+<script:module xmlns:script="http://openoffice.org/2000/script" script:name="JSONCollection" script:language="StarBasic">Option Compatible
+Option ClassModule
+Option Explicit
+
+Private mValues    AS new Collection
+Private mIteration AS Integer
+
+Private Sub Class_Initialize()
+	mIteration = 1
+End Sub
+
+Public Property Get JSONType AS String 
+	JSONType = &quot;Collection&quot;
+End Property
+
+Public Property Get Count AS Integer
+	Count = mValues.Count
+End Property
+
+Function IndexOf(key AS String) AS Integer
+	Dim i AS Integer
+	
+	For i = 1 To mValues.Count
+		Dim val AS Variant
+		
+		val = GetValue(i)	
+		
+		If TypeName(val) = &quot;Object&quot; Then
+			If val.JSONType = &quot;NameValue&quot; Then 
+				If val.Name = key Then
+					IndexOf = i
+					Exit Function
+				End If
+			End IF
+		End If
+	Next
+	
+	IndexOf = -1	
+End Function
+
+Public Sub Add(value AS Variant)
+	mValues.Add(value)
+End Sub
+
+Public Function SetValue(index AS Integer, value AS Variant)
+	mValues.Item(index) = value
+End Function
+
+
+Public Function GetValue(index AS Integer) AS Variant
+	GetValue = mValues.Item(index)
+End Function
+
+Public Function HasNext AS Boolean
+	HasNext = mIteration &lt;= mValues.Count
+End Function
+
+Public Function GetNext AS Variant
+	GetNext    = mValues.Item(mIteration)
+	mIteration = mIteration + 1
+End Function
+
+Public Sub ReIterate 
+	mIteration = 1
+End Sub
+</script:module>

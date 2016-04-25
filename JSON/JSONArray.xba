@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE script:module PUBLIC "-//OpenOffice.org//DTD OfficeDocument 1.0//EN" "module.dtd">
+<script:module xmlns:script="http://openoffice.org/2000/script" script:name="JSONArray" script:language="StarBasic">Option Compatible
+Option ClassModule
+Option Explicit
+
+Private mAttrs AS new JSONCollection
+
+Private Sub Class_Initialize()
+End Sub
+
+Public Property Get JSONType AS String 
+	JSONType = &quot;Array&quot;
+End Property
+
+Public Function GetValue(index AS Integer) AS Variant
+	GetValue = mAttrs.GetValue(index)
+End Function
+
+Public Sub SetValue(index AS Integer, value AS Variant)
+	Dim v AS Variant
+		
+	If index &lt;= mAttrs.Count Then 
+		mAttrs.SetValue(index, value)
+	Else
+		mAttrs.Add(value)
+	End If
+End Sub
+
+Public Property Get Count AS Integer
+	Count = mAttrs.Count
+End Property
+
+Public Property Let Value(value AS Variant)
+	mAttrs.Add(value)
+End Property
+
+Public Function HasNext AS Boolean
+	HasNext = mAttrs.HasNext
+End Function
+
+Public Function GetNext AS Variant
+	GetNext    = mAttrs.GetNext
+End Function
+
+Public Sub Unpack(ByVal value AS String, Optional separator AS String, Optional quote AS String)
+	Dim i       AS Integer
+	Dim fld     AS String
+	Dim inQuote AS Boolean
+	Dim ch		AS String
+	
+	inQuote = false
+	
+	If IsMissing(separator) Then separator = &quot;,&quot;
+	
+	For i = 1 To Len(value)
+		ch = Mid(value, i, 1)
+		
+		If not IsMissing(quote) AND ch = quote Then
+			inQuote = not inQuote
+		ElseIf not inQuote Then
+			If ch = separator Then
+				mAttrs.Add(Trim(fld))
+				fld   = &quot;&quot;
+			Else
+				fld = fld &amp; ch
+			End If
+		Else 
+			fld = fld &amp; ch
+		End If
+	Next
+	
+	If fld &lt;&gt; &quot;&quot; Or ch = separator Then mAttrs.Add(Trim(fld))
+End Sub
+
+Public Sub ReIterate 
+	mAttrs.ReIterate
+End Sub
+</script:module>

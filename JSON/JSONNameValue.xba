@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE script:module PUBLIC "-//OpenOffice.org//DTD OfficeDocument 1.0//EN" "module.dtd">
+<script:module xmlns:script="http://openoffice.org/2000/script" script:name="JSONNameValue" script:language="StarBasic">Option Compatible
+Option ClassModule
+
+Option Explicit
+
+Private _name  AS String
+Private _value AS Variant
+
+Private Sub Class_Initialize()
+End Sub
+
+Public Property Get JSONType AS String 
+	JSONType = &quot;NameValue&quot;
+End Property
+
+Public Property Let Name(name AS String)
+	_name = name
+End Property
+
+Public Property Get Name AS String
+	Name = _name
+End Property
+
+Public Property Let Value(value AS Variant)
+	_value = value
+End Property
+
+Public Property Get Value AS Variant
+	Value = _value
+End Property
+
+Public Sub Assign(name AS String, value AS Variant)
+	_name = name
+	_value = value
+End Sub
+
+
+
+</script:module>

@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE script:module PUBLIC "-//OpenOffice.org//DTD OfficeDocument 1.0//EN" "module.dtd">
+<script:module xmlns:script="http://openoffice.org/2000/script" script:name="Module1" script:language="StarBasic">REM  *****  BASIC  *****
+Sub Main
+	&apos;TestFormatter(false)
+	TestFormatter(false, &quot;C:\Test\x.txt&quot;)
+	&apos;TestCreate
+End Sub
+
+Sub TestCreate
+	Dim var  AS new JSONNameValue
+	Dim var2 AS new JSONNameValue
+	Dim arr1 AS new JSONArray
+	Dim col  AS new JSONCollection
+	Dim val  AS Variant
+	Dim obj  AS new JSONObject
+	Dim fmt  AS new JSONFormatter
+	
+	fmt.File = &quot;C:\Test\x.txt&quot;
+	col.Add(&quot;fred&quot;)
+	
+	var.assign(&quot;Name1&quot;, 2)
+	col.Add(var)
+	
+	obj.Add(&quot;Val1&quot;, &quot;John&quot;)
+	obj.Value = var
+	
+	var2 = obj.GetValue(&quot;Val1&quot;)
+	MsgBox var2.Value
+	
+	obj.Add(&quot;Val1&quot;, &quot;Johnathan&quot;)
+	MsgBox var2.Value
+	
+	arr1.SetValue(1, &quot;Sue&quot;)
+	MsgBox arr1.GetValue(1)
+	Do While col.HasNext
+		val = col.GetNext
+	Loop
+	MsgBox col.IndexOf(&quot;Name1&quot;)
+	MsgBox Var.JSONType + &quot; &quot; + var.Name + &quot;=&quot; + var.Value + &quot; value type &quot; + TypeName(var.Value) + &quot; &quot; + col.GetValue(1) + &quot; count &quot; + col.Count
+End Sub
+
+Private Sub TestFormatter(old AS Boolean, Optional fileName AS String)
+	Dim o1   AS new JSONObject
+	Dim o2   AS new JSONObject
+	Dim a1   AS new JSONArray
+	Dim a2   AS new JSONArray
+	Dim fmt  AS Object
+	
+	o2.Add(&quot;O2F1&quot;, &quot;Aden&quot;)
+	o2.Add(&quot;O2F2&quot;, &quot;Bill&quot;)
+	a1.Value = 1
+	a1.Value = o2
+	a2.Value = &quot;a2.1&quot;
+	a2.Value = 2
+	a2.Value = a1
+	o1.Add(&quot;O1F1&quot;, &quot;Chris&quot;)
+	o1.Add(&quot;O1F2&quot;, a2)
+	o1.Add(&quot;O1F3&quot;, o2)
+	o1.Add(&quot;O1F4&quot;, &quot;Dave&quot;)
+	
+	If old Then
+		fmt = new JSONFormatterOld
+		fmt.Self = fmt
+		
+		If Not IsMissing(fileName) Then fmt.File = fileName
+		
+		fmt.Build(&quot;&quot;, o1)
+	Else
+		fmt = new JSONFormatter
+		
+		If Not IsMissing(fileName) Then fmt.File = fileName
+		
+		Build(fmt, &quot;&quot;, o1)
+	End If
+	
+	fmt.Complete
+	MsgBox fmt.Text
+End Sub
+
+Private Sub Build(fmt AS JSONFormatter, ByVal leftPad AS String, inValue AS Variant)
+	Dim value AS Variant
+	
+	&apos;Using inValue directly causes an error when inValue is not an object. Using a copy of the
+	&apos;parameter seems to avoid the problem.
+	
+	value = inValue
+	Select Case TypeName(inValue)
+		Case &quot;Object&quot;
+			Select Case value.JSONType
+				Case &quot;Object&quot;, &quot;Array&quot;
+					If value.JSONType = &quot;Object&quot; Then
+						fmt.Add(leftPad, &quot;{&quot;)
+					Else
+						fmt.Add(leftPad, &quot;[&quot;)
+					End If
+					
+					value.ReIterate
+					leftPad = fmt.CurrentPrefix
+	
+					Do While value.HasNext
+						Build(fmt, leftPad, value.GetNext)
+		
+						If value.HasNext Then
+							fmt.Add(leftPad, &quot;,&quot;)
+							fmt.NewLine
+						Else
+							If value.JSONType = &quot;Object&quot; Then
+								fmt.Add(leftPad, &quot;}&quot;)
+							Else
+								fmt.Add(leftPad, &quot;]&quot;)
+							End If	
+						End If
+					Loop
+				Case &quot;NameValue&quot;
+					fmt.Add(leftPad, fmt.EscapeString(value.Name, false))
+					fmt.Add(leftPad, &quot;:&quot;)
+					Build(fmt, leftPad, value.Value)
+				Case Else
+			End Select
+		Case &quot;Boolean&quot;
+			If value then
+				fmt.Add(leftPad, &quot;true&quot;)
+			Else
+				fmt.Add(leftPad, &quot;false&quot;)
+			End If
+		Case &quot;Date&quot;
+			fmt.Add(leftPad, fmt.EscapeString(value, true))
+		Case &quot;String&quot;
+			fmt.Add(leftPad, fmt.EscapeString(value, true))
+		Case &quot;Empty&quot;, &quot;Null&quot;
+			fmt.Add(leftPad, &quot;null&quot;)
+		Case Else
+			fmt.Add(leftPad, value)
+	End Select
+End Sub
+</script:module>

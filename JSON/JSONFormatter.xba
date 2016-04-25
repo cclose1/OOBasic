@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE script:module PUBLIC "-//OpenOffice.org//DTD OfficeDocument 1.0//EN" "module.dtd">
+<script:module xmlns:script="http://openoffice.org/2000/script" script:name="JSONFormatter" script:language="StarBasic">Option Compatible
+Option ClassModule
+Option Explicit
+
+Private mText         AS String
+Private mFileNo       AS Integer
+Private mFileIO       AS Boolean
+Private mFile         AS String
+Private mLine         AS String
+Private mStrictQuotes AS Boolean
+
+Private Sub Class_Initialize()
+	mFileIO       = false
+	mStrictQuotes = true
+	mText         = &quot;&quot;
+	mLine         = &quot;&quot;
+End Sub
+
+Public Property Get JSONType AS String 
+	JSONType = &quot;Formatter&quot;
+End Property
+
+Public Property Get CurrentPrefix AS String
+	Dim i AS Integer
+	
+	CurrentPrefix = &quot;&quot;
+	
+	For i = 1 To Len(mLine)
+		CurrentPrefix = CurrentPrefix &amp; &quot; &quot;
+	Next
+End Property
+
+Public Property Let StrictQuotes(yes AS Boolean)
+	mStrictQuotes = yes
+End Property
+
+Public Property Get StrictQuotes AS Boolean
+	StrictQuotes = mStrictQuotes
+End Property
+
+Public Function EscapeString(text AS String, quote AS Boolean)
+	Dim i AS Integer
+	
+	If mStrictQuotes Then quote = true
+	
+	If quote Then 
+		EscapeString = &quot;&quot;&quot;&quot;
+	Else 
+		EscapeString = &quot;&quot;
+	End if
+	
+	For i = 1 To Len(text)
+		Dim ch AS String
+		
+		ch = Mid(text, i, 1)
+		
+		Select Case ch
+			Case vbTab
+				ch = &quot;\t&quot;
+			Case vbCR
+				ch = &quot;\r&quot;
+			Case vbLF
+				ch = &quot;\n&quot;
+			Case &quot;\&quot;
+				ch = &quot;\\&quot;
+			Case &quot;&quot;&quot;&quot;
+				ch = &quot;\&quot;&quot;&quot;
+		End Select
+	
+		EscapeString = EscapeString &amp; ch
+	Next
+	
+	If quote Then EscapeString = EscapeString &amp; &quot;&quot;&quot;&quot;
+End Function
+
+Public Sub Add(leftPad AS String, field AS String)
+	If mLine = &quot;&quot; Then mLine = leftPad
+	
+	mLine = mLine &amp; field
+End Sub
+
+Public Sub NewLine
+	If mFileIO Then
+		Print #mFileNo, mLine
+	Else
+		mText = mText &amp; mLine &amp; Chr(13)
+	End If
+	
+	mLine = &quot;&quot;
+End Sub
+
+Public Property Let File(name AS String)
+	mFileIO = true
+	mFileNo = Freefile
+	mFile   = name
+	
+	Open mFile For Output As #mFileNo
+End Property
+
+Public Sub Complete
+	If mLine &lt;&gt; &quot;&quot; Then NewLine
+	
+	If mFileIO Then Close #mFileNo
+End Sub
+
+Public Property Get Text AS String
+	Text = mText
+End Property
+</script:module>

@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE script:module PUBLIC "-//OpenOffice.org//DTD OfficeDocument 1.0//EN" "module.dtd">
+<script:module xmlns:script="http://openoffice.org/2000/script" script:name="JSONObject" script:language="StarBasic">Option Compatible
+Option ClassModule
+Option Explicit
+
+Private mAttrs AS new JSONCollection
+
+Private Sub Class_Initialize()
+End Sub
+
+Public Property Get JSONType AS String 
+	JSONType = &quot;Object&quot;
+End Property
+
+Public Function GetValue(name AS String) AS Variant
+	Dim i AS Integer
+	Dim o AS Object
+	
+	i = mAttrs.IndexOf(name)
+	
+	If i &lt;&gt; -1 Then GetValue = mAttrs.GetValue(i).Value
+End Function
+
+Public Function HasValue(name AS String) AS Boolean	
+	HasValue = mAttrs.IndexOf(name) &lt;&gt; -1
+End Function
+
+Private Sub SetValue(value AS JSONNameValue)
+	Dim i AS Integer
+	
+	i = mAttrs.IndexOf(value.name)
+	
+	If i &lt;&gt; -1 Then 
+		mAttrs.GetValue(i).Value = value.Value
+	Else
+		mAttrs.Add(value)
+	End If
+End Sub
+
+Public Property Let Value(value AS JSONNameValue)
+	SetValue(value)
+End Property
+
+Public Sub Add(name AS String, value AS Variant, optional ignoreBlank)
+	Dim v AS JSONNameValue
+	
+	If IsMissing(ignoreBlank) Then ignoreBlank = false
+	If TypeName(value) = &quot;String&quot; And ignoreBlank Then
+		If trim(value) = &quot;&quot; Then Exit Sub
+	End If
+	
+	v = new JSONNameValue
+	v.Name  = name
+	v.Value = value
+	SetValue(v)
+End Sub
+
+Public Function HasNext AS Boolean
+	HasNext = mAttrs.HasNext
+End Function
+
+Public Function GetNext AS JSONNameValue
+	GetNext    = mAttrs.GetNext
+End Function
+
+Public Sub ReIterate 
+	mAttrs.ReIterate
+End Sub
+</script:module>
